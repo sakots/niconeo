@@ -25,6 +25,7 @@ interface NeoApi {
   params: Record<string, Record<string, string>>;
   init(): boolean;
   start(): void;
+  setColor(color: string): void;
   painter: { getImage(): HTMLCanvasElement };
 }
 
@@ -35,6 +36,7 @@ const NEO_GITHUB_BRANCH = "master";
 const NEO_LATEST_COMMIT_URL = `https://api.github.com/repos/${NEO_GITHUB_REPOSITORY}/commits/${NEO_GITHUB_BRANCH}`;
 const NEO_JSDELIVR_BASE = `https://cdn.jsdelivr.net/gh/${NEO_GITHUB_REPOSITORY}`;
 const ROOT_ID = "nico-neo-bookmarklet";
+const COLOR_PICKER_ID = "nico-neo-color-picker";
 
 function fail(message: string): never {
   window.alert(`NicoNEO: ${message}`);
@@ -172,6 +174,7 @@ function install(): void {
       <div class="nico-neo-panel">
         <div class="nico-neo-bar">
           <strong>NicoNEO v${APP_VERSION} / PaintBBS NEO</strong>
+          <input id="${COLOR_PICKER_ID}" type="color" value="#000000" aria-label="描画色" title="描画色">
           <span>「投稿」でお絵カキコのキャンバスへ反映します</span>
           <button type="button" class="nico-neo-close" aria-label="閉じる">×</button>
         </div>
@@ -185,12 +188,25 @@ function install(): void {
     #${ROOT_ID} .nico-neo-shade{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;box-sizing:border-box;padding:20px 24px;background:#0009;overflow:hidden}
     #${ROOT_ID} .nico-neo-panel{max-width:100%;max-height:100%;overflow:hidden;background:#fff;box-shadow:0 8px 30px #000}
     #${ROOT_ID} .nico-neo-bar{display:flex;gap:12px;align-items:center;padding:8px 12px;color:#222;font:14px sans-serif}
-    #${ROOT_ID} .nico-neo-bar span{flex:1}.nico-neo-close{font-size:22px;line-height:1}
+    #${ROOT_ID} .nico-neo-bar span{flex:1}#${ROOT_ID} input[type=color]{width:28px;height:28px;padding:1px}.nico-neo-close{font-size:22px;line-height:1}
   `;
   document.head.append(style);
 
+  const colorPicker = root.querySelector<HTMLInputElement>(`#${COLOR_PICKER_ID}`);
+  const syncColorPicker = (event: Event) => {
+    const color = (event as CustomEvent<{ hex?: unknown }>).detail?.hex;
+    if (typeof color === "string" && /^#[0-9a-f]{6}$/i.test(color) && colorPicker) {
+      colorPicker.value = color;
+    }
+  };
+  document.addEventListener("neo:colorchange", syncColorPicker);
+  colorPicker?.addEventListener("input", () => {
+    window.Neo?.setColor(colorPicker.value);
+  });
+
   const close = () => {
     document.paintBBSCallback = undefined;
+    document.removeEventListener("neo:colorchange", syncColorPicker);
     root.remove();
     style.remove();
     delete window.__nicoNeo;
