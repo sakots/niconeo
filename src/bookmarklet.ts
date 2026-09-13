@@ -1,6 +1,6 @@
 export {};
 
-import { APP_VERSION } from "./version";
+import packageJson from "../package.json";
 
 /**
  * PaintBBS NEO launcher for the Niconico Encyclopedia Oekakiko editor.
@@ -29,6 +29,7 @@ interface NeoApi {
 }
 
 const DEFAULT_NEO_BASE = "https://oekakibbs.moe/apps/neo/";
+const APP_VERSION = packageJson.version;
 const NEO_GITHUB_REPOSITORY = "funige/neo";
 const NEO_GITHUB_BRANCH = "master";
 const NEO_LATEST_COMMIT_URL = `https://api.github.com/repos/${NEO_GITHUB_REPOSITORY}/commits/${NEO_GITHUB_BRANCH}`;
