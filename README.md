@@ -23,7 +23,7 @@ npm run build
 npm run build:loader
 ```
 
-`dist/bookmarklet-loader.url.txt` が生成されます。ローダーは GitHub API から `main` の最新コミット SHA を取得して `https://cdn.jsdelivr.net/gh/sakots/niconeo@<SHA>/dist/bookmarklet.js` を読み込みます。API に接続できない場合だけ、キャッシュ回避パラメータ付きの `main` を読み込みます。本体（約 4 KB）は起動時に取得するため、ブックマーク URL 自体は約 750 文字です。
+`dist/bookmarklet-loader.url.txt` が生成されます。ローダーは GitHub API から `main` の最新コミット SHA を取得して `https://cdn.jsdelivr.net/gh/sakots/niconeo@<SHA>/dist/bookmarklet.js` を読み込みます。API に接続できない場合だけ、キャッシュ回避パラメータ付きの `main` を読み込みます。本体（約 4 KB）は起動時に取得するため、ブックマーク URL 自体は約 750 文字です。ローダーの script 要素は実行後も残し、NEO の実行中に読み込み元が消えないようにしています。
 
 NEO 本体と CSS は起動時に公式 `funige/neo` の `master` 最新コミット SHA を GitHub API から取得し、SHA 固定の jsDelivr URL で読み込みます。GitHub API または jsDelivr を利用できない場合は、`https://oekakibbs.moe/apps/neo/` の `neo.js` / `neo.css` をキャッシュ回避パラメータ付きで使います。どちらも大百科側の Content Security Policy により禁止されている環境では起動できません。
 

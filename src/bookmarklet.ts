@@ -151,7 +151,8 @@ function install(): void {
 
   const root = document.createElement("div");
   root.id = ROOT_ID;
-  root.className = "NEO";
+  // NEO itself creates one `.NEO` element and hides subsequent matches as a
+  // duplicate-instance safeguard. The wrapper must not share that class.
   root.innerHTML = `
     <div class="nico-neo-shade" role="dialog" aria-modal="true" aria-label="PaintBBS NEO">
       <div class="nico-neo-panel">
