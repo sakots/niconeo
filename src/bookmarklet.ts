@@ -187,8 +187,9 @@ function install(): void {
   style.textContent = `
     #${ROOT_ID} .nico-neo-shade{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;box-sizing:border-box;padding:20px 24px;background:#0009;overflow:hidden}
     #${ROOT_ID} .nico-neo-panel{max-width:100%;max-height:100%;overflow:hidden;background:#fff;box-shadow:0 8px 30px #000}
-    #${ROOT_ID} .nico-neo-bar{display:flex;gap:12px;align-items:center;padding:8px 12px;color:#222;font:14px sans-serif}
+    #${ROOT_ID} .nico-neo-bar{position:relative;z-index:10000;display:flex;gap:12px;align-items:center;padding:8px 12px;color:#222;font:14px sans-serif}
     #${ROOT_ID} .nico-neo-bar span{flex:1}#${ROOT_ID} input[type=color]{width:28px;height:28px;padding:1px}.nico-neo-close{font-size:22px;line-height:1}
+    #${ROOT_ID}.nico-neo-fullscreen .nico-neo-bar{position:fixed;top:8px;right:12px;background:#fff;border:1px solid #888;box-shadow:0 1px 4px #0006}
   `;
   document.head.append(style);
 
@@ -204,9 +205,16 @@ function install(): void {
     window.Neo?.setColor(colorPicker.value);
   });
 
+  const syncFullscreenHeader = (event: Event) => {
+    const fullscreen = (event as CustomEvent<{ fullscreen?: unknown }>).detail?.fullscreen;
+    root.classList.toggle("nico-neo-fullscreen", fullscreen === true);
+  };
+  document.addEventListener("neo:fullscreenchange", syncFullscreenHeader);
+
   const close = () => {
     document.paintBBSCallback = undefined;
     document.removeEventListener("neo:colorchange", syncColorPicker);
+    document.removeEventListener("neo:fullscreenchange", syncFullscreenHeader);
     root.remove();
     style.remove();
     delete window.__nicoNeo;
