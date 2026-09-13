@@ -1,0 +1,14 @@
+{
+  "name": "niconeo-bookmarklet",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/bookmarklet.ts --bundle --format=iife --target=es2020 --minify --outfile=dist/bookmarklet.js && node scripts/make-bookmarklet-url.mjs",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.0"
+  }
+}
