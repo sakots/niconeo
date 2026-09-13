@@ -1,9 +1,45 @@
 # NicoNEO bookmarklet
 
+![alt text](imgs/image-3.png)
+
+## 何
+
 ニコニコ大百科のお絵カキコ編集画面で PaintBBS NEO を開き、描画結果を既存の投稿キャンバスへ戻すブックマークレットです。認証・実際の投稿は大百科の標準フォームを使うため、このコードが資格情報や投稿 API を扱うことはありません。
 
 配布版のバージョンは [package.json](package.json) の `version` で管理します。初期値は `0.0.0` です。ここを更新してビルドすると、NEO ダイアログの表示へ反映されます。
 CODEX使用。
+
+## つかいかた
+
+まずブックマークレットを作ります。
+
+### GoogleChromeの場合
+
+「ページを追加」を選択します。
+
+![alt text](imgs/image.png)
+
+「ブックマークを編集」で分かりやすい名前にして、URLを`dist/bookmarklet-loader.url.txt`の内容にします。
+
+![alt text](imgs/image-1.png)
+
+コピペ用
+
+```javascript
+javascript:(async()=>{const i='nico-neo-loader';if(document.getElementById(i))return;let v='main';try{const r=await fetch('https://api.github.com/repos/sakots/niconeo/commits/main',{cache:'no-store',credentials:'omit',headers:{Accept:'application/vnd.github+json'},referrerPolicy:'no-referrer'});if(r.ok){const j=await r.json();if(typeof j.sha==='string'&&/^[0-9a-f]{40}$/.test(j.sha))v=j.sha}}catch{}const s=document.createElement('script');s.id=i;s.charset='UTF-8';s.src='https://cdn.jsdelivr.net/gh/sakots/niconeo@'+v+'/dist/bookmarklet.js'+(v==='main'?'?v='+Date.now():'');s.onerror=()=>{s.remove();alert('NicoNEOの読み込みに失敗しました。')};(document.head||document.documentElement).appendChild(s)})()
+```
+
+ニコニコ大百科のスレッドで、「お絵カキコする」を選択し、絵を描く画面にします。
+
+![alt text](imgs/image-2.png)
+
+ここで、先ほどのブックマークを呼び出して絵をかきます。
+
+「投稿」を押すと、お絵カキコの画面にイラストが転写されます。
+
+![alt text](imgs/image-4.png)
+
+できた！
 
 ## ビルドと導入
 
