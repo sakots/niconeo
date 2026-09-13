@@ -115,19 +115,14 @@ async function loadNeo(): Promise<void> {
   }
 }
 
-function visibleCanvas(candidate: HTMLCanvasElement): boolean {
-  const style = getComputedStyle(candidate);
-  const rect = candidate.getBoundingClientRect();
-  return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
-}
-
-/** The native editor's drawable canvas is normally its largest visible canvas. */
+/**
+ * Oekakiko keeps the image submitted to the server in #OImgBlog. #OEditBlog
+ * is a separate interaction canvas, so choosing the visually largest canvas
+ * can make an image appear on screen but submit as blank.
+ */
 function findOekakikoCanvas(): HTMLCanvasElement | null {
-  return [...document.querySelectorAll("canvas")]
-    .filter((canvas): canvas is HTMLCanvasElement => canvas instanceof HTMLCanvasElement)
-    .filter((canvas) => !canvas.closest(`#${ROOT_ID}`))
-    .filter(visibleCanvas)
-    .sort((a, b) => b.width * b.height - a.width * a.height)[0] ?? null;
+  const canvas = document.getElementById("OImgBlog");
+  return canvas instanceof HTMLCanvasElement ? canvas : null;
 }
 
 function findNativeSubmit(canvas: HTMLCanvasElement): HTMLElement | null {
@@ -148,7 +143,7 @@ function install(): void {
 
   const target = findOekakikoCanvas();
   if (!target) {
-    fail("お絵カキコの編集画面で実行してください（投稿用キャンバスが見つかりません）。");
+    fail("お絵カキコの編集画面で実行してください（投稿用 #OImgBlog が見つかりません）。");
   }
 
   const width = Math.max(1, target.width || Math.round(target.getBoundingClientRect().width));
