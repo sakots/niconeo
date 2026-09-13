@@ -1,6 +1,8 @@
 # NicoNEO bookmarklet
 
 ニコニコ大百科のお絵カキコ編集画面で PaintBBS NEO を開き、描画結果を既存の投稿キャンバスへ戻すブックマークレットです。認証・実際の投稿は大百科の標準フォームを使うため、このコードが資格情報や投稿 API を扱うことはありません。
+
+配布版のバージョンは [src/version.ts](src/version.ts) の `APP_VERSION` で管理します。初期値は `0.0.0` です。ここを更新してビルドすると、NEO ダイアログの表示へ反映されます。
 CODEX使用。
 
 ## ビルドと導入
@@ -13,7 +15,17 @@ npm run build
 
 生成される `dist/bookmarklet.url.txt` の一行全体を、ブックマークの URL に貼り付けてください。お絵カキコ編集画面でそのブックマークを実行し、NEO 側の「投稿」を押すと絵が元のキャンバスへ反映されます。続けて元ページの「投稿」ボタンで送信してください。
 
-NEO 本体と CSS は公式リポジトリの v1.7.26 相当コミット `96dbb2a8e25ad48c2b23490c4d9c06c33e046cea` を jsDelivr 経由で固定参照します。大百科側の Content Security Policy またはネットワーク設定により CDN 読み込みが禁止された環境では起動できません。その場合は、`NEO_BASE` を自分で管理する同一ポリシーで許可された静的ホストへ変更してください。
+### 短いローダー版
+
+`appneo` と同じ GitHub API + jsDelivr 方式のローダーを生成できます。`sakots/niconeo` の `main` に `dist/bookmarklet.js` をコミットして公開してください。
+
+```sh
+npm run build:loader
+```
+
+`dist/bookmarklet-loader.url.txt` が生成されます。ローダーは GitHub API から `main` の最新コミット SHA を取得して `https://cdn.jsdelivr.net/gh/sakots/niconeo@<SHA>/dist/bookmarklet.js` を読み込みます。API に接続できない場合だけ、キャッシュ回避パラメータ付きの `main` を読み込みます。本体（約 4 KB）は起動時に取得するため、ブックマーク URL 自体は約 750 文字です。
+
+NEO 本体と CSS は起動時に公式 `funige/neo` の `master` 最新コミット SHA を GitHub API から取得し、SHA 固定の jsDelivr URL で読み込みます。GitHub API または jsDelivr を利用できない場合は、`https://oekakibbs.moe/apps/neo/` の `neo.js` / `neo.css` をキャッシュ回避パラメータ付きで使います。どちらも大百科側の Content Security Policy により禁止されている環境では起動できません。
 
 ## 実装上の前提
 

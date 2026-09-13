@@ -1,5 +1,7 @@
 export {};
 
+import { APP_VERSION } from "./version";
+
 /**
  * PaintBBS NEO launcher for the Niconico Encyclopedia Oekakiko editor.
  *
@@ -26,12 +28,11 @@ interface NeoApi {
   painter: { getImage(): HTMLCanvasElement };
 }
 
-const NEO_VERSION = "1.7.26";
-// The upstream project does not create a Git tag for every displayed version.
-// Pin the verified commit so a future master update cannot silently change this
-// bookmarklet's editor implementation.
-const NEO_REVISION = "96dbb2a8e25ad48c2b23490c4d9c06c33e046cea";
-const NEO_BASE = `https://cdn.jsdelivr.net/gh/funige/neo@${NEO_REVISION}/dist`;
+const DEFAULT_NEO_BASE = "https://oekakibbs.moe/apps/neo/";
+const NEO_GITHUB_REPOSITORY = "funige/neo";
+const NEO_GITHUB_BRANCH = "master";
+const NEO_LATEST_COMMIT_URL = `https://api.github.com/repos/${NEO_GITHUB_REPOSITORY}/commits/${NEO_GITHUB_BRANCH}`;
+const NEO_JSDELIVR_BASE = `https://cdn.jsdelivr.net/gh/${NEO_GITHUB_REPOSITORY}`;
 const ROOT_ID = "nico-neo-bookmarklet";
 
 function fail(message: string): never {
@@ -51,6 +52,7 @@ function loadStylesheet(url: string): Promise<void> {
 }
 
 function loadScript(url: string): Promise<void> {
+  if (window.Neo) return Promise.resolve();
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = url;
@@ -59,6 +61,55 @@ function loadScript(url: string): Promise<void> {
     script.onerror = () => reject(new Error(`NEO を読み込めません: ${url}`));
     document.head.append(script);
   });
+}
+
+function withCacheBust(url: string): string {
+  const next = new URL(url);
+  next.searchParams.set("nicoNeo", Date.now().toString(36));
+  return next.href;
+}
+
+/** Resolve master once, then use an immutable jsDelivr URL for this launch. */
+async function latestNeoBase(): Promise<string> {
+  try {
+    const response = await fetch(NEO_LATEST_COMMIT_URL, {
+      cache: "no-store",
+      credentials: "omit",
+      headers: { Accept: "application/vnd.github+json" },
+      referrerPolicy: "no-referrer",
+    });
+    if (!response.ok) throw new Error(`GitHub API: ${response.status}`);
+    const data: unknown = await response.json();
+    const sha = typeof data === "object" && data !== null && "sha" in data
+      ? (data as { sha?: unknown }).sha
+      : undefined;
+    if (typeof sha !== "string" || !/^[0-9a-f]{40}$/.test(sha)) {
+      throw new Error("GitHub API から NEO のコミット SHA を取得できませんでした。");
+    }
+    return `${NEO_JSDELIVR_BASE}@${sha}/dist/`;
+  } catch (error) {
+    console.warn("NicoNEO: 最新の NEO を取得できないため代替配信 URL を使用します。", error);
+    return DEFAULT_NEO_BASE;
+  }
+}
+
+async function loadNeo(): Promise<void> {
+  const latestBase = await latestNeoBase();
+  const loadFrom = async (base: string, cacheBust: boolean) => {
+    const css = new URL("neo.css", base).href;
+    const js = new URL("neo.js", base).href;
+    await loadStylesheet(cacheBust ? withCacheBust(css) : css);
+    await loadScript(cacheBust ? withCacheBust(js) : js);
+    if (!window.Neo) throw new Error(`NEO が定義されませんでした: ${js}`);
+  };
+
+  try {
+    await loadFrom(latestBase, latestBase === DEFAULT_NEO_BASE);
+  } catch (error) {
+    if (latestBase === DEFAULT_NEO_BASE) throw error;
+    console.warn("NicoNEO: jsDelivr から NEO を読み込めないため代替配信 URL を使用します。", error);
+    await loadFrom(DEFAULT_NEO_BASE, true);
+  }
 }
 
 function visibleCanvas(candidate: HTMLCanvasElement): boolean {
@@ -104,7 +155,7 @@ function install(): void {
     <div class="nico-neo-shade" role="dialog" aria-modal="true" aria-label="PaintBBS NEO">
       <div class="nico-neo-panel">
         <div class="nico-neo-bar">
-          <strong>PaintBBS NEO</strong>
+          <strong>NicoNEO v${APP_VERSION} / PaintBBS NEO</strong>
           <span>「投稿」でお絵カキコのキャンバスへ反映します</span>
           <button type="button" class="nico-neo-close" aria-label="閉じる">×</button>
         </div>
@@ -155,8 +206,7 @@ function install(): void {
 
   const start = async () => {
     try {
-      await loadStylesheet(`${NEO_BASE}/paintbbs-${NEO_VERSION}.css`);
-      await loadScript(`${NEO_BASE}/paintbbs-${NEO_VERSION}.js`);
+      await loadNeo();
       const neo = window.Neo;
       if (!neo) fail("NEO の初期化に失敗しました。");
       neo.params = {
