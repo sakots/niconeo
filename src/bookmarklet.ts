@@ -149,6 +149,20 @@ function install(): void {
     fail("お絵カキコの編集画面で実行してください（投稿用キャンバスが見つかりません）。");
   }
 
+  const width = Math.max(1, target.width || Math.round(target.getBoundingClientRect().width));
+  const height = Math.max(1, target.height || Math.round(target.getBoundingClientRect().height));
+  // Reserve room for the overlay padding, title bar, and borders.  NEO's
+  // applet dimensions include its controls, so only the canvas itself will
+  // scroll when an unusually large canvas cannot fit in the viewport.
+  const appletWidth = Math.min(
+    Math.max(width + 100, 400),
+    Math.max(300, window.innerWidth - 48),
+  );
+  const appletHeight = Math.min(
+    Math.max(height + 160, 460),
+    Math.max(360, window.innerHeight - 72),
+  );
+
   const root = document.createElement("div");
   root.id = ROOT_ID;
   // NEO itself creates one `.NEO` element and hides subsequent matches as a
@@ -161,15 +175,15 @@ function install(): void {
           <span>「投稿」でお絵カキコのキャンバスへ反映します</span>
           <button type="button" class="nico-neo-close" aria-label="閉じる">×</button>
         </div>
-        <div class="neo-applet-paintbbs" data-width="720" data-height="640"></div>
+        <div class="neo-applet-paintbbs" data-width="${appletWidth}" data-height="${appletHeight}"></div>
       </div>
     </div>`;
   document.body.append(root);
 
   const style = document.createElement("style");
   style.textContent = `
-    #${ROOT_ID} .nico-neo-shade{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:#0009}
-    #${ROOT_ID} .nico-neo-panel{max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;background:#fff;box-shadow:0 8px 30px #000}
+    #${ROOT_ID} .nico-neo-shade{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;box-sizing:border-box;padding:20px 24px;background:#0009;overflow:hidden}
+    #${ROOT_ID} .nico-neo-panel{max-width:100%;max-height:100%;overflow:hidden;background:#fff;box-shadow:0 8px 30px #000}
     #${ROOT_ID} .nico-neo-bar{display:flex;gap:12px;align-items:center;padding:8px 12px;color:#222;font:14px sans-serif}
     #${ROOT_ID} .nico-neo-bar span{flex:1}.nico-neo-close{font-size:22px;line-height:1}
   `;
@@ -183,9 +197,6 @@ function install(): void {
   };
   root.querySelector<HTMLButtonElement>(".nico-neo-close")?.addEventListener("click", close);
   window.__nicoNeo = { close };
-
-  const width = Math.max(1, target.width || Math.round(target.getBoundingClientRect().width));
-  const height = Math.max(1, target.height || Math.round(target.getBoundingClientRect().height));
 
   // NEO calls this when its built-in 投稿 button is pressed. Returning false
   // prevents NEO's PaintBBS-protocol upload; the host editor remains responsible
